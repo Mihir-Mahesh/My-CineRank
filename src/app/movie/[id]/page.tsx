@@ -5,29 +5,25 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { TMDBMedia } from '../../../types/tmdb';
-import { MyMovieRating } from '../../../types/ratings'; // Import your rating interface
+import { MyMovieRating } from '../../../types/ratings'; 
 
-interface MovieDetailPageProps {
-  // No explicit props needed as we'll use useParams
-}
 
 export default function MovieDetailPage({}: MovieDetailPageProps) {
   const params = useParams();
-  const movieId = Number(params.id); // Convert ID to number
+  const movieId = Number(params.id); 
   const [movieDetails, setMovieDetails] = useState<TMDBMedia | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [myRating, setMyRating] = useState<MyMovieRating | null>(null);
-  const [userRatingInput, setUserRatingInput] = useState<string>(''); // For the 1-10 rating input
+  const [userRatingInput, setUserRatingInput] = useState<string>('');
 
   const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
   const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
   const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
-  // --- Fetch Movie Details from TMDb ---
   useEffect(() => {
     const fetchDetails = async () => {
-      if (isNaN(movieId)) { // Check if movieId is a valid number
+      if (isNaN(movieId)) { 
         setError("Invalid movie ID.");
         setLoading(false);
         return;
@@ -44,13 +40,11 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
 
       try {
         let data: TMDBMedia | null = null;
-        // Try fetching as a movie first
         let response = await fetch(
           `${TMDB_BASE_URL}/movie/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`
         );
 
         if (!response.ok) {
-          // If movie not found, try as a TV show
           response = await fetch(
             `${TMDB_BASE_URL}/tv/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`
           );
@@ -61,7 +55,6 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
         }
         data = await response.json();
         setMovieDetails(data);
-        // Pre-fill userRatingInput if a rating already exists
         if (myRating) {
           setUserRatingInput(myRating.my_rating.toString());
         }
@@ -74,9 +67,8 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
     };
 
     fetchDetails();
-  }, [movieId, TMDB_API_KEY]); // Dependency on movieId and API Key
+  }, [movieId, TMDB_API_KEY]); 
 
-  // --- Fetch Personal Rating from Local Storage ---
   useEffect(() => {
     if (isNaN(movieId)) return;
 
@@ -84,7 +76,6 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
       const storedRatings = JSON.parse(localStorage.getItem('myMovieRatings') || '[]') as MyMovieRating[];
       const foundRating = storedRatings.find(rating => rating.id === movieId);
       setMyRating(foundRating || null);
-      // Set input value when personal rating is loaded
       if (foundRating) {
         setUserRatingInput(foundRating.my_rating.toString());
       }
@@ -92,11 +83,10 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
       console.error("Failed to load personal rating from localStorage:", e);
       setMyRating(null);
     }
-  }, [movieId]); // Depend on movieId to re-check storage
+  }, [movieId]); 
 
-  // --- Handle User Rating Submission ---
   const handleSaveRating = () => {
-    if (!movieDetails) return; // Can't rate if no movie details loaded
+    if (!movieDetails) return; 
 
     const ratingValue = parseInt(userRatingInput);
 
@@ -112,7 +102,7 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
       imdb_rating: movieDetails.vote_average,
       my_rating: ratingValue,
       overview: movieDetails.overview,
-      media_type: movieDetails.media_type as 'movie' | 'tv' // Store media type
+      media_type: movieDetails.media_type as 'movie' | 'tv' 
     };
 
     try {
@@ -120,15 +110,13 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
       const existingIndex = storedRatings.findIndex(rating => rating.id === newRating.id);
 
       if (existingIndex > -1) {
-        // Update existing rating
         storedRatings[existingIndex] = newRating;
       } else {
-        // Add new rating
         storedRatings.push(newRating);
       }
 
       localStorage.setItem('myMovieRatings', JSON.stringify(storedRatings));
-      setMyRating(newRating); // Update local state
+      setMyRating(newRating); 
       alert("Rating saved successfully!");
     } catch (e) {
       console.error("Failed to save rating to localStorage:", e);
@@ -136,7 +124,6 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
     }
   };
 
-  // --- Handle Delete Rating ---
   const handleDeleteRating = () => {
     if (!movieDetails || !myRating) return;
 
@@ -149,8 +136,8 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
       const updatedRatings = storedRatings.filter(rating => rating.id !== myRating.id);
 
       localStorage.setItem('myMovieRatings', JSON.stringify(updatedRatings));
-      setMyRating(null); // Clear local state
-      setUserRatingInput(''); // Clear input
+      setMyRating(null); 
+      setUserRatingInput(''); 
       alert("Rating deleted successfully!");
     } catch (e) {
       console.error("Failed to delete rating from localStorage:", e);
@@ -163,7 +150,7 @@ export default function MovieDetailPage({}: MovieDetailPageProps) {
     ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
     : '/no-poster.png';
 
-  const imdbId = (movieDetails as any)?.external_ids?.imdb_id; // Accessing external_ids.imdb_id (TMDb often includes this)
+  const imdbId = (movieDetails as any)?.external_ids?.imdb_id; 
   const imdbLink = imdbId ? `https://www.imdb.com/title/${imdbId}/` : null;
 
   const title = movieDetails?.title || movieDetails?.name;
