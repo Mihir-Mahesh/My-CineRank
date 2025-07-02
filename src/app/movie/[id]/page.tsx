@@ -8,7 +8,7 @@ import { TMDBMedia } from '../../../types/tmdb';
 import { MyMovieRating } from '../../../types/ratings'; 
 
 
-export default function MovieDetailPage({}: MovieDetailPageProps) {
+export default function MovieDetailPage() {
   const params = useParams();
   const movieId = Number(params.id); 
   const [movieDetails, setMovieDetails] = useState<TMDBMedia | null>(null);
