@@ -22,6 +22,7 @@ export interface TMDBMedia {
     vote_count: number;
     original_language: string;
     media_type?: 'movie' | 'tv' | 'person';
+    external_ids?: TMDBExternalIds;
 }
 
 export interface TMDBSearchResponse {
