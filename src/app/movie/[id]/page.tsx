@@ -171,7 +171,7 @@ export default function MovieDetailPage() { // Removed type annotation here
     ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
     : '/no-poster.png';
 
-  const imdbId = (movieDetails as any)?.external_ids?.imdb_id;
+  const imdbId = movieDetails?.external_ids?.imdb_id;
   const imdbLink = imdbId ? `https://www.imdb.com/title/${imdbId}/` : null;
 
   const title = movieDetails?.title || movieDetails?.name;
