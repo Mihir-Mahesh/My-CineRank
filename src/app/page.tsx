@@ -46,7 +46,7 @@ export default function HomePage() {
           allPopularMovies = allPopularMovies.concat(data.results);
         }
 
-        setPopularMovies(allPopularMovies.filter(media => media.poster_path !== null && media.vote_count > 700)); // Still displaying 20, but now filtered
+        setPopularMovies(allPopularMovies.filter(media => media.poster_path !== null && media.vote_count > 500)); // Still displaying 20, but now filtered
       } catch (err: unknown) {
         let message = "Unknown error occured";
         if (err instanceof Error){
@@ -89,12 +89,17 @@ export default function HomePage() {
         }
 
         const data: TMDBSearchResponse = await response.json();
-        // Filtering out 'person' and potentially also low vote counts if desired for search results
         setSearchResults(data.results.filter(
           item => (item.media_type === 'movie' || item.media_type === 'tv') && (item.vote_count || 0) >= 0 // No specific vote count filter for search yet, but you could add it
         ));
-      } catch (err: any) {
-        setError(err.message || 'An unknown error occurred during search.');
+      } catch (err: unknown) {
+        let message = "Unknown error occured";
+        if (err instanceof Error){
+          message = err.message;
+        } else if (typeof err === 'string'){
+          message = err;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }
