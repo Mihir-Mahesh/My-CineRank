@@ -46,10 +46,15 @@ export default function HomePage() {
           allPopularMovies = allPopularMovies.concat(data.results);
         }
 
-        // You can limit the total number of items here if you fetched too many
         setPopularMovies(allPopularMovies.filter(media => media.poster_path !== null && media.vote_count > 700)); // Still displaying 20, but now filtered
-      } catch (err: any) {
-        setError(err.message || 'An unknown error occurred while fetching popular movies.');
+      } catch (err: unknown) {
+        let message = "Unknown error occured";
+        if (err instanceof Error){
+          message = err.message;
+        } else if (typeof err === 'string'){
+          message = err;
+        }
+        setError(message);
       } finally {
         setLoading(false);
       }
@@ -58,7 +63,6 @@ export default function HomePage() {
     fetchPopular();
   }, [TMDB_API_KEY]);
 
-  // --- Effect for fetching SEARCH results (with debouncing) ---
   useEffect(() => {
     const fetchSearchResults = async () => {
       if (!searchQuery.trim()) {
