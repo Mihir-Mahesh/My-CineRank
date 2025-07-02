@@ -23,6 +23,7 @@ export interface TMDBMedia {
     original_language: string;
     media_type?: 'movie' | 'tv' | 'person';
     external_ids?: TMDBExternalIds;
+    tagline?: string;
 }
 
 export interface TMDBSearchResponse {
