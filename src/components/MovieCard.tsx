@@ -17,9 +17,6 @@ const MovieCard: React.FC<MovieCardProps> = ({ media, imageBaseUrl }) => {
   const year = releaseDate ? new Date(releaseDate).getFullYear() : 'N/A';
   const posterUrl = media.poster_path ? `${imageBaseUrl}${media.poster_path}` : '/no-poster.png'; // Fallback image
 
-  // Determine the correct route based on media type
-  const mediaTypeRoute = media.media_type === 'movie' ? 'movie' : 'tv';
-
   return (
     // Wrap the entire card with Next.js Link
     <Link href={`/movie/${media.id}`} passHref>
