@@ -147,12 +147,12 @@ export default function HomePage() {
             </div>
           ) : (
             !searchQuery.trim() && (
-              <p className="text-gray-400 mt-4 text-lg">Start by searching for a movie or TV show, or check out what's popular!</p>
+              <p className="text-gray-400 mt-4 text-lg">Start by searching for a movie or TV show, or check out what&apos;s popular!</p>
             )
           )}
 
            {searchResults.length === 0 && !loading && !error && searchQuery.trim() && (
-            <p className="text-gray-400 mt-4 text-lg">No results found for "{searchQuery}".</p>
+            <p className="text-gray-400 mt-4 text-lg">No results found for &quot;{searchQuery}&quot;.</p>
           )}
         </>
       )}
