@@ -4,13 +4,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image'; // Import Next.js Image component
+
 import { TMDBMedia } from '../../../types/tmdb';
-import { MyMovieRating } from '../../../types/ratings'; 
+import { MyMovieRating } from '../../../types/ratings';
 
+// Removed: interface MovieDetailPageProps {} as it's empty and not used for props
 
-export default function MovieDetailPage() {
+export default function MovieDetailPage() { // Removed type annotation here
   const params = useParams();
-  const movieId = Number(params.id); 
+  const movieId = Number(params.id); // Convert ID to number
   const [movieDetails, setMovieDetails] = useState<TMDBMedia | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,11 +22,12 @@ export default function MovieDetailPage() {
 
   const TMDB_API_KEY = process.env.NEXT_PUBLIC_TMDB_API_KEY;
   const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
-  const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+  const TMDB_IMAGE_BASE_URL = 'https://image.tmdb.org/t/p/w500'; // Larger image for details page
 
+  // --- Fetch Movie Details from TMDb ---
   useEffect(() => {
     const fetchDetails = async () => {
-      if (isNaN(movieId)) { 
+      if (isNaN(movieId)) {
         setError("Invalid movie ID.");
         setLoading(false);
         return;
@@ -45,6 +49,7 @@ export default function MovieDetailPage() {
         );
 
         if (!response.ok) {
+          // If movie not found, try as a TV show
           response = await fetch(
             `${TMDB_BASE_URL}/tv/${movieId}?api_key=${TMDB_API_KEY}&append_to_response=external_ids`
           );
@@ -55,20 +60,30 @@ export default function MovieDetailPage() {
         }
         data = await response.json();
         setMovieDetails(data);
-        if (myRating) {
-          setUserRatingInput(myRating.my_rating.toString());
-        }
+        // Pre-fill userRatingInput if a rating already exists
+        // Moved this logic to its own useEffect for clarity and to satisfy exhaustive-deps
+        // if (myRating) {
+        //   setUserRatingInput(myRating.my_rating.toString());
+        // }
 
-      } catch (err: any) {
-        setError(err.message || 'Failed to fetch media details.');
+      } catch (err: unknown) { // Changed 'any' to 'unknown'
+        // Type narrowing for unknown error
+        let message = 'An unknown error occurred.';
+        if (err instanceof Error) {
+            message = err.message;
+        } else if (typeof err === 'string') {
+            message = err;
+        }
+        setError(message || 'Failed to fetch media details.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchDetails();
-  }, [movieId, TMDB_API_KEY]); 
+  }, [movieId, TMDB_API_KEY]); // Dependency on movieId and API Key
 
+  // --- Fetch Personal Rating from Local Storage ---
   useEffect(() => {
     if (isNaN(movieId)) return;
 
@@ -76,17 +91,22 @@ export default function MovieDetailPage() {
       const storedRatings = JSON.parse(localStorage.getItem('myMovieRatings') || '[]') as MyMovieRating[];
       const foundRating = storedRatings.find(rating => rating.id === movieId);
       setMyRating(foundRating || null);
+      // Set input value when personal rating is loaded
       if (foundRating) {
         setUserRatingInput(foundRating.my_rating.toString());
+      } else {
+        setUserRatingInput(''); // Clear input if no rating found
       }
-    } catch (e) {
+    } catch (e: unknown) { // Changed 'any' to 'unknown'
       console.error("Failed to load personal rating from localStorage:", e);
       setMyRating(null);
+      setUserRatingInput(''); // Clear input on error
     }
-  }, [movieId]); 
+  }, [movieId, myRating]); // <<< ADDED myRating to dependency array
 
+  // --- Handle User Rating Submission ---
   const handleSaveRating = () => {
-    if (!movieDetails) return; 
+    if (!movieDetails) return;
 
     const ratingValue = parseInt(userRatingInput);
 
@@ -102,7 +122,7 @@ export default function MovieDetailPage() {
       imdb_rating: movieDetails.vote_average,
       my_rating: ratingValue,
       overview: movieDetails.overview,
-      media_type: movieDetails.media_type as 'movie' | 'tv' 
+      media_type: movieDetails.media_type as 'movie' | 'tv' // Store media type
     };
 
     try {
@@ -116,14 +136,15 @@ export default function MovieDetailPage() {
       }
 
       localStorage.setItem('myMovieRatings', JSON.stringify(storedRatings));
-      setMyRating(newRating); 
+      setMyRating(newRating);
       alert("Rating saved successfully!");
-    } catch (e) {
+    } catch (e: unknown) { // Changed 'any' to 'unknown'
       console.error("Failed to save rating to localStorage:", e);
       alert("Could not save rating. Please try again.");
     }
   };
 
+  // --- Handle Delete Rating ---
   const handleDeleteRating = () => {
     if (!movieDetails || !myRating) return;
 
@@ -136,10 +157,10 @@ export default function MovieDetailPage() {
       const updatedRatings = storedRatings.filter(rating => rating.id !== myRating.id);
 
       localStorage.setItem('myMovieRatings', JSON.stringify(updatedRatings));
-      setMyRating(null); 
-      setUserRatingInput(''); 
+      setMyRating(null);
+      setUserRatingInput('');
       alert("Rating deleted successfully!");
-    } catch (e) {
+    } catch (e: unknown) { // Changed 'any' to 'unknown'
       console.error("Failed to delete rating from localStorage:", e);
       alert("Could not delete rating. Please try again.");
     }
@@ -150,7 +171,7 @@ export default function MovieDetailPage() {
     ? `${TMDB_IMAGE_BASE_URL}${movieDetails.poster_path}`
     : '/no-poster.png';
 
-  const imdbId = (movieDetails as any)?.external_ids?.imdb_id; 
+  const imdbId = (movieDetails as any)?.external_ids?.imdb_id;
   const imdbLink = imdbId ? `https://www.imdb.com/title/${imdbId}/` : null;
 
   const title = movieDetails?.title || movieDetails?.name;
@@ -189,14 +210,20 @@ export default function MovieDetailPage() {
     <main className="flex min-h-screen flex-col items-center p-8 bg-gray-900 text-white">
       <div className="bg-gray-800 rounded-xl shadow-lg p-6 max-w-4xl w-full flex flex-col md:flex-row gap-8">
         <div className="md:w-1/3 flex-shrink-0">
-          <img
+          {/* Changed <img> to <Image /> */}
+          <Image
             src={posterUrl}
             alt={title || 'Media Poster'}
+            width={500} // Actual width for w500 poster path
+            height={750} // Aspect ratio 2:3 for width 500
             className="w-full h-auto rounded-lg shadow-md"
+            priority={true} // Load this image faster as it's primary content
+            sizes="(max-width: 768px) 100vw, 33vw" // Responsive sizes for browser
           />
         </div>
         <div className="md:w-2/3 flex flex-col">
           <h1 className="text-4xl font-extrabold mb-2 text-purple-400">{title}</h1>
+          <p className="text-lg text-gray-300 mb-4">{movieDetails.tagline}</p>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div>
